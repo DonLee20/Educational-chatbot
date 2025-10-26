@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EduChat — Educational Chatbot</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Add the .loading style back here, as it was in the original HTML */
+    .loading {
+      font-style: italic;
+      opacity: 0.7;
+    }
+    /* Placeholder for /static/style.css content - you need to keep your original CSS file */
+    /* .page, .hero, .chat-section, .chat-container, .chat-window, .message, .from-user, .from-bot, .chat-input, .send, .chip, etc. styles should be in style.css */
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="brand">
+          <div class="logo">📚</div>
+          <div class="title">EduChat</div>
+          <div class="tagline">Ask. Learn. Repeat.</div>
+        </div>
+
+        <div class="intro">
+          <h1>Smart help for learners</h1>
+          <p>Interactive educational chatbot designed to explain concepts, give examples, and guide practice.</p>
+          <div class="buttons">
+            <a class="btn" href="#chat">Start Chatting</a>
+            <a class="btn ghost" href="#features">How it helps</a>
+          </div>
+        </div>
+
+        <div class="hero-illustration" aria-hidden="true">
+          <div class="bot-card">
+            <div class="bot-header">
+              <div class="bot-avatar">🤖</div>
+              <div class="bot-name">EduBot</div>
+            </div>
+            <div class="bot-body">
+              <div class="bubble left">Hi! I can explain topics step-by-step.</div>
+              <div class="bubble right">Show me what you're working on.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="chat" class="chat-section">
+      <div class="chat-container">
+        <header class="chat-header">
+          <div class="chat-title">EduBot — Learning Assistant</div>
+          <div class="chat-sub">Your Personal Assistant</div>
+        </header>
+
+        <div class="chat-window" id="chatWindow">
+          <div class="message from-bot">Hello, What's on your agenda today?</div>
+        </div>
+
+        <form class="chat-input" id="chatForm" onsubmit="return false;">
+          <input id="userInput" placeholder="Ask me everything..." autocomplete="off">
+          <button id="sendBtn" class="send" type="button">Send</button>
+        </form>
+      </div>
+
+      <aside class="help-panel">
+        <h3>Quick prompts</h3>
+        <ul>
+          <li><button class="chip">What is backpropagation?</button></li>
+          <li><button class="chip">Define a loss function.</button></li>
+          <li><button class="chip">Explain data normalization.</button></li>
+        </ul>
+        
+      </aside>
+    </section>
+
+    <section id="features" class="features">
+      <div class="feature-grid">
+        <div class="feature">
+          <h4>Explain</h4>
+          <p>Step-by-step explanations with examples.</p>
+        </div>
+        <div class="feature">
+          <h4>Practice</h4>
+          <p>Quizzes and guided exercises.</p>
+        </div>
+        <div class="feature">
+          <h4>Resources</h4>
+          <p>Links, diagrams, and further readings.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <p>Made by MUTHUKUMARAN S</p>
+    </footer>
+  </main>
+
+  <script>
+    const chatWindow = document.getElementById('chatWindow');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatForm = document.getElementById('chatForm');
+
+    function appendMessage(text, cls='from-user'){
+      const d = document.createElement('div');
+      d.className = 'message ' + cls;
+      d.textContent = text;
+      chatWindow.appendChild(d);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+      return d;
+    }
+
+    // --- POST LOGIC ---
+    function sendMessage(msg){
+      appendMessage(msg, 'from-user');
+      userInput.value = '';
+
+      // Show loading indicator
+      const loadingDiv = appendMessage('EduBot is typing...', 'from-bot');
+      loadingDiv.classList.add('loading');
+
+      // AJAX POST request to /get
+      fetch('/get', {
+        method: 'POST', // <-- Use POST method
+        headers: {
+          // Tell Flask we are sending URL-encoded form data
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        // Send the message data in the body as form data
+        body: `msg=${encodeURIComponent(msg)}` 
+      })
+        .then(response => response.text())
+        .then(data => {
+          loadingDiv.textContent = data;  // replace loading with actual answer
+          loadingDiv.classList.remove('loading');
+        })
+        .catch(err => {
+          console.error("Fetch error:", err);
+          loadingDiv.textContent = 'Oops! Something went wrong.';
+          loadingDiv.classList.remove('loading');
+        });
+    }
+    // --- END CORRECTED LOGIC ---
+
+    // Send button click
+    sendBtn.addEventListener('click', ()=>{
+      const val = userInput.value.trim();
+      if(!val) return;
+      sendMessage(val);
+    });
+
+    // Enter key press
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();   // Prevent normal form submit
+        sendBtn.click();      // Trigger AJAX send
+      }
+    });
+
+    // Prevent form submit just in case
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+    });
+
+    // Quick prompt chips
+    document.querySelectorAll('.chip').forEach(b => b.addEventListener('click', ()=>{
+      const t = b.textContent.trim();
+      sendMessage(t);
+    }));
+  </script>
+</body>
+</html>
